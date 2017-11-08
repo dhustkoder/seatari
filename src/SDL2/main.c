@@ -6,13 +6,14 @@
 #include "SDL_audio.h"
 #include "audio.h"
 #include "log.h"
+#include "rom.h"
 #include "cpu.h"
 
 
-#define TEXTURE_WIDTH  (256)
-#define TEXTURE_HEIGHT (240)
-#define WIN_WIDTH      TEXTURE_WIDTH
-#define WIN_HEIGHT     TEXTURE_HEIGHT
+#define TEXTURE_WIDTH  (160)
+#define TEXTURE_HEIGHT (192)
+#define WIN_WIDTH  TEXTURE_WIDTH
+#define WIN_HEIGHT TEXTURE_HEIGHT
 
 SDL_AudioDeviceID audio_device;
 SDL_Renderer* renderer;
@@ -120,8 +121,61 @@ Lfclose:
 	return data;
 }
 
+static bool update_events(void)
+{
+	SDL_Event event;
+	while (SDL_PollEvent(&event) != 0) {
+		switch (event.type) {
+		case SDL_QUIT:
+			return false;
+		case SDL_KEYDOWN:
+			if (event.key.keysym.scancode == SDL_SCANCODE_ESCAPE)
+				return false;
+			//update_key(event.key.keysym.scancode, KEYSTATE_DOWN);
+			break;
+		case SDL_KEYUP:
+			//update_key(event.key.keysym.scancode, KEYSTATE_UP);
+			break;
+		}
+	}
+
+	return true;
+}
+
 
 int main(const int argc, const char* const* const argv)
 {
-	return 0;
+	if (argc < 2) {
+		fprintf(stderr, "Usage: %s [romfile]\n", argv[0]);
+		return EXIT_FAILURE;
+	}
+
+	if (!initialize_platform())
+		return EXIT_FAILURE;
+
+	int exitcode = EXIT_FAILURE;
+
+	uint8_t* const rom = readfile(argv[1]);
+	if (!rom)
+		goto Lterminate_platform;
+	
+	loadrom(rom);
+	
+
+	resetcpu();
+	while (update_events()) {
+		unsigned clk = 0;
+		Uint32 dt = SDL_GetTicks();
+		do {
+			clk += stepcpu();
+		} while (clk < ATARI_CPU_FREQ);
+		SDL_Delay(1000 - (SDL_GetTicks() - dt));
+	}
+
+	exitcode = EXIT_SUCCESS;
+	unloadrom();
+	free(rom);
+Lterminate_platform:
+	terminate_platform();
+	return exitcode;	
 }

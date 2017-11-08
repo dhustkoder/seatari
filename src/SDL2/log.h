@@ -1,5 +1,5 @@
-#ifndef UNES_LOG_H_
-#define UNES_LOG_H_
+#ifndef SEATARI_LOG_H_
+#define SEATARI_LOG_H_
 #include "SDL.h"
 
 

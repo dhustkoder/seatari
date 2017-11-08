@@ -5,6 +5,8 @@
 #include "log.h"
 #include "cpu.h"
 
+#define ADDR_RESET_VECTOR (0xFFFC)
+
 #define FLAG_C (0x01)
 #define FLAG_Z (0x02)
 #define FLAG_I (0x04)
@@ -14,6 +16,9 @@
 #define FLAG_V (0x40)
 #define FLAG_N (0x80)
 
+// rom.c
+extern const uint8_t* rom_data;
+
 // cpu.c
 static uint16_t step_cycles;
 static uint16_t pc;
@@ -22,10 +27,18 @@ static struct { bool c : 1, z : 1, i : 1, d : 1, v : 1, n : 1; } flags;
 static uint8_t ram[128];  // zeropage,stack,ram
 
 
-static uint8_t read(const uint16_t addr)
+static uint8_t read(uint16_t addr)
 {
+	addr &= 0x1FFF;
+
 	if (addr >= 0x80 && addr <= 0xFF)
 		return ram[addr - 0x80];
+	else if (addr <= 0x7F)
+		/* TIA REGISTERS */;
+	else if (addr >= 0x200 && addr <= 0x2FF)
+		/* RIOT REGISTERS */;
+	else if (addr >= 0x1000 && addr <= 0x1FFF)
+		return rom_data[addr - 0x1000];
 	return 0;
 }
 
@@ -41,10 +54,18 @@ static uint16_t read16msk(const uint16_t addr)
 	return read16(addr);
 }
 
-static void write(const uint8_t val, const uint16_t addr)
+static void write(const uint8_t val, uint16_t addr)
 {
+	addr &= 0x1FFF;
+
 	if (addr >= 0x80 && addr <= 0xFF)
 		ram[addr - 0x80] = val;
+	else if (addr <= 0x7F)
+		/* TIA REGISTERS */;
+	else if (addr >= 0x200 && addr <= 0x2FF)
+		/* RIOT REGISTERS */;
+	else if (addr >= 0x1000 && addr <= 0x1FFF)
+		/* ROM */;
 }
 
 static void write16(const uint16_t val, const uint16_t addr)
@@ -255,7 +276,7 @@ static void dointerrupt(const uint16_t vector, const bool brk)
 
 void resetcpu(void)
 {
-	pc = 0;/*reset vector ?*/
+	pc = read16(ADDR_RESET_VECTOR);
 	a = 0x00;
 	x = 0x00;
 	y = 0x00;
@@ -269,7 +290,7 @@ unsigned stepcpu(void)
 {
 	#define fetch8()            (read(pc++))
 	#define fetch16()           (pc += 2, read16(pc - 2))
-	#define writezp(data, addr) (ram[addr] = data)
+	#define writezp(data, addr) (write(data, addr))      //(ram[addr] = data)
 
 	#define immediate()      (fetch8())
 	#define wzeropage()      (fetch8())
@@ -284,9 +305,9 @@ unsigned stepcpu(void)
 	#define windirecty()     (chkpagecross(read16msk(fetch8()), y))
 	#define windirectynchk() ((read16msk(fetch8()) + y)&0xFFFF)
 
-	#define rzeropage()  (ram[wzeropage()])
-	#define rzeropagex() (ram[wzeropagex()])
-	#define rzeropagey() (ram[wzeropagey()])
+	#define rzeropage()  (read(wzeropage()))  //(ram[wzeropage()])
+	#define rzeropagex() (read(wzeropagex())) //(ram[wzeropagex()])
+	#define rzeropagey() (read(wzeropagey())) //(ram[wzeropagey()])
 	#define rabsolute()  (read(wabsolute()))
 	#define rabsolutex() (read(wabsolutex()))
 	#define rabsolutey() (read(wabsolutey()))

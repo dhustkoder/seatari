@@ -1,5 +1,5 @@
-#ifndef UNES_INPUT_H_
-#define UNES_INPUT_H_
+#ifndef SEATARI_INPUT_H_
+#define SEATARI_INPUT_H_
 #include <assert.h>
 #include "SDL.h"
 #include "cpu.h"
