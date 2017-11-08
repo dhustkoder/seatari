@@ -12,3 +12,4 @@ void unloadrom(void)
 {
 	rom_data = NULL;
 }
+

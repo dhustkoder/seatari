@@ -554,3 +554,4 @@ unsigned stepcpu(void)
 
 	return step_cycles;
 }
+
