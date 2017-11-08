@@ -160,8 +160,6 @@ int main(const int argc, const char* const* const argv)
 		goto Lterminate_platform;
 	
 	loadrom(rom);
-	
-
 	resetcpu();
 	while (update_events()) {
 		unsigned clk = 0;
@@ -177,5 +175,6 @@ int main(const int argc, const char* const* const argv)
 	free(rom);
 Lterminate_platform:
 	terminate_platform();
-	return exitcode;	
+	return exitcode;
 }
+
