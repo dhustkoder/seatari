@@ -61,11 +61,11 @@ endif
 .PHONY: all clean asm
 
 
-all: $(BUILD_DIR)/unes
+all: $(BUILD_DIR)/seatari
 asm: $(ASM) $(PLATFORM_ASM)
 
 
-$(BUILD_DIR)/unes: $(OBJS) $(PLATFORM_OBJS)
+$(BUILD_DIR)/seatari: $(OBJS) $(PLATFORM_OBJS)
 	@mkdir -p $(BUILD_DIR)
 	$(CC) $^ -o $@ $(CFLAGS) $(LDFLAGS)
 

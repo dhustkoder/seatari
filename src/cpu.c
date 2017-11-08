@@ -2,6 +2,7 @@
 #include <stdbool.h>
 #include <assert.h>
 #include <string.h>
+#include "log.h"
 #include "cpu.h"
 
 #define FLAG_C (0x01)
@@ -21,18 +22,26 @@ static struct { bool c : 1, z : 1, i : 1, d : 1, v : 1, n : 1; } flags;
 static uint8_t ram[128];  // zeropage,stack,ram
 
 
-static uint8_t read8(const uint16_t addr)
+static uint8_t read(const uint16_t addr)
 {
 	if (addr >= 0x80 && addr <= 0xFF)
 		return ram[addr - 0x80];
+	return 0;
 }
 
 static uint16_t read16(const uint16_t addr)
 {
-	return (read8(addr + 1)<<8)|read8(addr);
+	return (read(addr + 1)<<8)|read(addr);
 }
 
-static void write8(const uint8_t val, const uint16_t addr)
+static uint16_t read16msk(const uint16_t addr)
+{
+	if ((addr&0x00FF) == 0xFF)
+		return (read(addr&0xFF00)<<8)|read(addr);
+	return read16(addr);
+}
+
+static void write(const uint8_t val, const uint16_t addr)
 {
 	if (addr >= 0x80 && addr <= 0xFF)
 		ram[addr - 0x80] = val;
@@ -40,8 +49,8 @@ static void write8(const uint8_t val, const uint16_t addr)
 
 static void write16(const uint16_t val, const uint16_t addr)
 {
-	write8((val&0xFF00)>>8, addr + 1);
-	write8(val&0xFF, addr);
+	write((val&0xFF00)>>8, addr + 1);
+	write(val&0xFF, addr);
 }
 
 static uint8_t getflags(void)
@@ -232,13 +241,6 @@ static void branch(const bool cond)
 	}
 }
 
-static bool check_irq_sources(void)
-{
-	for (unsigned i = 0; i < IRQ_SRC_SIZE; ++i)
-		if (cpu_irq_sources[i])
-			return true;
-	return false;
-}
 
 static void dointerrupt(const uint16_t vector, const bool brk)
 {
@@ -253,11 +255,7 @@ static void dointerrupt(const uint16_t vector, const bool brk)
 
 void resetcpu(void)
 {
-	cpu_nmi = false;
-	memset(cpu_irq_sources, 0, sizeof cpu_irq_sources);
-	irq_pass = false;
-
-	pc = read16(ADDR_RESET_VECTOR);
+	pc = 0;/*reset vector ?*/
 	a = 0x00;
 	x = 0x00;
 	y = 0x00;
@@ -265,9 +263,6 @@ void resetcpu(void)
 
 	memset(&flags, 0, sizeof flags);
 	flags.i = true;
-	memset(&padstate, 0, sizeof padstate);
-	memset(&padshifts, 0, sizeof padshifts);
-	padstrobe = false;
 }
 
 unsigned stepcpu(void)
@@ -319,15 +314,6 @@ unsigned stepcpu(void)
 	};
 
 	step_cycles = 0;
-
-	if (cpu_nmi) {
-		dointerrupt(ADDR_NMI_VECTOR, false);
-		cpu_nmi = false;
-	} else if (irq_pass && check_irq_sources()) {
-		dointerrupt(ADDR_IRQ_VECTOR, false);
-	}
-
-	irq_pass = flags.i == 0;
 	const uint8_t opcode = fetch8();
 	step_cycles += clock_table[opcode];
 
@@ -510,7 +496,7 @@ unsigned stepcpu(void)
 	case 0x6C: pc = read16msk(fetch16()); break;
 
 	// implieds
-	case 0x00: dointerrupt(ADDR_IRQ_VECTOR, true);          break; // BRK
+	case 0x00: /*dointerrupt(ADDR_IRQ_VECTOR, true);*/      break; // BRK
 	case 0x18: flags.c = false;                             break; // CLC
 	case 0x38: flags.c = true;                              break; // SEC
 	case 0x58: flags.i = false;                             break; // CLI
@@ -530,7 +516,7 @@ unsigned stepcpu(void)
 	case 0x40: // RTI
 		setflags(spop());
 		pc = spop16();
-		irq_pass = flags.i == 0;
+		//irq_pass = flags.i == 0;
 		break;
 	case 0x60: pc = spop16() + 1;                           break; // RTS
 	case 0xAA: ld(&x, a);                                   break; // TAX
