@@ -5,7 +5,9 @@
 #include "log.h"
 #include "cpu.h"
 
+
 #define ADDR_RESET_VECTOR (0xFFFC)
+
 
 #define FLAG_C (0x01)
 #define FLAG_Z (0x02)
