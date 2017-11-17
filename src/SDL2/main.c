@@ -8,10 +8,11 @@
 #include "log.h"
 #include "rom.h"
 #include "cpu.h"
+#include "tia.h"
 
 
-#define TEXTURE_WIDTH  (160)
-#define TEXTURE_HEIGHT (192)
+#define TEXTURE_WIDTH  (SCR_WIDTH)
+#define TEXTURE_HEIGHT (SCR_HEIGHT)
 #define WIN_WIDTH  TEXTURE_WIDTH
 #define WIN_HEIGHT TEXTURE_HEIGHT
 
@@ -161,11 +162,14 @@ int main(const int argc, const char* const* const argv)
 	
 	loadrom(rom);
 	resetcpu();
+	resettia();
 	while (update_events()) {
 		unsigned clk = 0;
 		Uint32 dt = SDL_GetTicks();
 		do {
-			clk += stepcpu();
+			const unsigned ticks = stepcpu();
+			steptia(ticks);
+			clk += ticks;
 		} while (clk < ATARI_CPU_FREQ);
 		SDL_Delay(1000 - (SDL_GetTicks() - dt));
 	}
