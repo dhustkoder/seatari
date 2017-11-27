@@ -11,7 +11,7 @@
 #include "tia.h"
 
 
-#define TEXTURE_WIDTH  (SCR_WIDTH)
+#define TEXTURE_WIDTH  (SCR_WIDTH * 2)
 #define TEXTURE_HEIGHT (SCR_HEIGHT)
 #define WIN_WIDTH  TEXTURE_WIDTH
 #define WIN_HEIGHT TEXTURE_HEIGHT
@@ -30,7 +30,7 @@ static bool initialize_platform(void)
 	}
 
 	// video
-	window = SDL_CreateWindow("µnes", SDL_WINDOWPOS_CENTERED,
+	window = SDL_CreateWindow("seatari", SDL_WINDOWPOS_CENTERED,
 				  SDL_WINDOWPOS_CENTERED,
 				  WIN_WIDTH, WIN_HEIGHT,
 				  SDL_WINDOW_SHOWN|SDL_WINDOW_RESIZABLE);

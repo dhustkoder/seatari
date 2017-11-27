@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <string.h>
 #include "log.h"
+#include "tia.h"
 #include "cpu.h"
 
 
@@ -40,7 +41,7 @@ static uint8_t read(uint16_t addr)
 	else if (addr >= 0x200 && addr <= 0x2FF)
 		/* RIOT REGISTERS */;
 	else if (addr >= 0x1000 && addr <= 0x1FFF)
-		return rom_data[addr - 0x1000];
+		return rom_data[addr & 2047];
 	return 0;
 }
 
@@ -63,7 +64,7 @@ static void write(const uint8_t val, uint16_t addr)
 	if (addr >= 0x80 && addr <= 0xFF)
 		ram[addr - 0x80] = val;
 	else if (addr <= 0x7F)
-		/* TIA REGISTERS */;
+		writetia(val, addr);
 	else if (addr >= 0x200 && addr <= 0x2FF)
 		/* RIOT REGISTERS */;
 	else if (addr >= 0x1000 && addr <= 0x1FFF)

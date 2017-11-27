@@ -7,7 +7,7 @@
 #define SCREEN_WIDTH  (160)
 #define SCREEN_HEIGHT (192)
 
-static void render(const uint8_t* restrict const screen)
+static void render(const uint32_t* const screen)
 {
 	extern SDL_Renderer* renderer;
 	extern SDL_Texture* texture;
@@ -16,8 +16,7 @@ static void render(const uint8_t* restrict const screen)
 	Uint32* pixels;
 	SDL_LockTexture(texture, NULL, (void**)&pixels, &pitch);
 
-	for (unsigned i = 0; i < SCREEN_WIDTH * SCREEN_HEIGHT; ++i)
-		pixels[i] = screen[i];
+	memcpy(pixels, screen, SCREEN_WIDTH * SCREEN_HEIGHT);
 
 	SDL_UnlockTexture(texture);
 	SDL_RenderCopy(renderer, texture, NULL, NULL);
