@@ -9,6 +9,7 @@ static unsigned scanline;
 static unsigned clock;
 static uint32_t screen[SCR_HEIGHT][SCR_WIDTH];
 
+
 void resettia(void)
 {
 	scanline = 0;
